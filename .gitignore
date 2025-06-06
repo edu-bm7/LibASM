@@ -1,0 +1,6 @@
+*.o
+tests.c
+tests
+.clang-format
+
+
