@@ -11,4 +11,10 @@ section .text
 ft_write:
     mov rax, SYS_WRITE
     syscall
+    jc .error ;; Carry Flag setted (error)
+    ret
+
+.error:
+    xor rax, rax
+    mov rax, -1
     ret
