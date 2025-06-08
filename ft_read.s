@@ -1,8 +1,23 @@
 ;; https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_64.tbl
+global ft_read
+extern __errno_location
+
 section .data
     SYS_READ equ 0
-
 ;; ssize_t read (int fd, void *buf, size_t count);
 section .text
 
+ft_read:
+    mov rax, SYS_READ
+    syscall
+    cmp rax, 0
+    jl .error
+    ret
+
+.error:
+    mov edi, eax
+    call __errno_location wrt ..plt
+    mov [rax], edi
+    mov eax, -1
+    ret
 
