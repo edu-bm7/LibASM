@@ -18,6 +18,6 @@ ft_read:
     mov edi, eax
     call __errno_location wrt ..plt
     mov [rax], edi
-    mov eax, -1
+    mov rax, -1
     ret
 
