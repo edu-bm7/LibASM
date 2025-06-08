@@ -15,6 +15,7 @@ ft_read:
     ret
 
 .error:
+    neg rax
     mov edi, eax
     call __errno_location wrt ..plt
     mov [rax], edi
