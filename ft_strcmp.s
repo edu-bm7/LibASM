@@ -1,5 +1,5 @@
+global ft_strcmp
 section .text
-    global ft_strcmp
 ;; int strcmp(const char *s1, const char *s2);
 ;; It returns a positive number if s1 > s2, negative if s1 < s2 and 0 if they are equal
 ;; s1 is rdi, s2 is rsi

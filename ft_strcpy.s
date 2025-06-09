@@ -1,6 +1,6 @@
+global ft_strcpy
 ;; char *ft_strcpy(char *dst,const char *src)
 section .text
-    global ft_strcpy
 ;; rdi will be our buffer, and rsi our source, rax our return value.
 ft_strcpy:
     ;; Save a reference to the source pointer into our return value.

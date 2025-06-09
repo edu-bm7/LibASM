@@ -1,6 +1,5 @@
+global ft_strlen
 section .text
-    global ft_strlen
-
 ft_strlen:
     ;; Function prologue
     ;; Preserve the base pointer
