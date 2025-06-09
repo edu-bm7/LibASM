@@ -1,7 +1,8 @@
 AS = nasm
 CC = gcc
+NAME = libasm.a
 CFLAGS = -g -Wall -Wextra -pedantic -Werror
-LDFLAGS = 
+LDFLAGS = -L. -lasm
 ASFLAGS = -g -F dwarf -Werror
 ALL_ASFLAGS = -f elf64
 ALL_LDFLAGS = -pie -Wl,--fatal-warnings
@@ -12,15 +13,19 @@ ALL_ASFLAGS += $(ASFLAGS)
 
 C_OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
 AS_OBJS = $(patsubst %.s, %.o, $(wildcard *.s))
-ALL_OBJS += $(C_OBJS)
-ALL_OBJS += $(AS_OBJS)
 
 CC_CMD = $(CC) $(ALL_CFLAGS) -c -o $@ $<
 
-all: tests
-	./$<
-tests: $(ALL_OBJS)
-	$(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) -o $@ $(ALL_OBJS)
+$(NAME): $(AS_OBJS)
+	@ar rcs $(NAME) $?
+	@echo "--------------------------"
+	@echo "Libft created and indexed."
+	@echo "--------------------------"
+
+all: $(NAME)
+
+tests: $(NAME) $(C_OBJS)
+	$(CC) $(ALL_CFLAGS) $(C_OBJS) -o $@ $(ALL_LDFLAGS)
 
 %.o: %.s
 	$(AS) $(ALL_ASFLAGS) -o $@ $<
@@ -31,6 +36,8 @@ tests: $(ALL_OBJS)
 clean:
 	rm -f *.o
 
-.PHONY: all clean
+fclean: clean
+	rm -f tests libasm.a
 
+.PHONY: all clean fclean
 

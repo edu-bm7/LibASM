@@ -1,3 +1,4 @@
+*.a
 *.o
 tests.c
 tests
