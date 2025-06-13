@@ -18,6 +18,7 @@ ft_atoi_base:
     jb .error
     mov r12, rax	    ;; our base length in callee-saved register
     mov rdi, rbx
+
 .valid_base_loop:	    ;; Check if we have a valid base
     mov r9b, [rbx]
     test r9b, r9b
@@ -34,6 +35,7 @@ ft_atoi_base:
     cmp r9b, CR		    ;; '\r'
     ja .printable_ok
     jmp .error
+
 .printable_ok:
     cmp r9b, SPACE	    ;; ' '
     je .error
