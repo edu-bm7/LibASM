@@ -2,6 +2,7 @@
 global ft_atoi_base
 extern ft_strlen
 
+;; Our Constants
 TAB	equ 9
 CR	equ 13
 SPACE	equ 32
