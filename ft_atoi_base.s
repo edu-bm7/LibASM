@@ -60,7 +60,7 @@ ft_atoi_base:
     je .dup_not_found        ;; If so, there isn't duplicates, move to the next R10.
     mov al, byte [rcx]
     cmp al, r9b              ;; Test byte [RAX] against byte [R9].
-    je .error   
+    je .error
     ;; If its equal there is duplicates.
     add rcx, 1
     jmp .dup_find_loop
@@ -104,16 +104,14 @@ ft_atoi_base:
 .test_negative:
     cmp byte [rdi], MINUS    ;; '-'
     je .change_sign
-
-.atoi_main_loop_preparation:
+    ;; ft_atoi_base main loop preparation
     ;; To call find_char_index(base, *str)
     ;; we need to swap their positions.
     xchg rdi, rsi            ;; RSI <-> RDI.
     mov r8, rdi              ;; Save RDI in R8 so we can restore our base later.
 
 .outer_loop:
-    mov rdi, r8              ;; Restore the base to continue the loop.
-    mov cl, byte [rsi]       ;; Test if we reached end of string ('\0').
+    mov cl, byte [rsi]       ;; Test if we reached end of string on RSI ('\0').
     test cl, cl
     jz .finish
     xor rcx, rcx             ;; Zero out our counter.
@@ -135,6 +133,7 @@ ft_atoi_base:
     imul r9, r11            ;; Multiply our accumulator * base_length.
     add r9, rcx             ;; Adds the base index to our accumulator.
     add rsi, 1
+    mov rdi, r8             ;; Restore the base to continue the loop.
     jmp .outer_loop
 
 .not_found:
