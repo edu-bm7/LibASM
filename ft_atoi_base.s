@@ -1,9 +1,9 @@
 ;; ft_atoi_base(char *str, char *base)
-;; Here despite the fact there this is a leaf function, to avoid the function call/return
-;; overhead, I used callee-saved registers, so we do need to restore them before returning
-;; the function
+;; After a refactor and taking into consideration that this is a leaf function and
+;; to avoid the function call/return excessive overhead, I've taking the approach
+;; to only use caller-saved registers 
+;; 
 global ft_atoi_base
-extern ft_strlen
 
 ;; Our Constants
 TAB	equ 9
@@ -15,67 +15,70 @@ MINUS	equ 45
 
 section .text
 ft_atoi_base:
-    ;; Push our callee-saved address
-    push r12
-    push r13
-    xchg rdi, rsi           ;; Swap RDI <-> RSI so we can call ft_strlen() with the base.
-    mov rbx, rdi            ;; RBX is our scan ptr.
-    call ft_strlen
-    cmp rax, 2
+    mov r10, rsi             ;; Our base pointer, save it into r10 so we can restore it later
+    xor r11, r11             ;; Our base length
+.find_base_len:
+    cmp byte [rsi], 0
+    je .prepare_to_valid_base
+    add rsi, 1
+    add r11, 1
+    jmp .find_base_len
+
+.prepare_to_valid_base:
+    cmp r11, 2
     jb .error
-    mov r12, rax            ;; Our base length in callee-saved register.
-    mov rdi, rbx
+    mov rsi, r10             ;; restore our base value value
 
-.valid_base_loop:           ;; Check if we have a valid base.
-    mov r9b, byte [rbx]
+.valid_base_loop:            ;; Check if we have a valid base.
+    mov r9b, byte [r10]
     test r9b, r9b
-    je .base_ok             ;; End of loop NULL.
+    je .base_ok              ;; End of loop NULL.
 
-    cmp r9b, PLUS           ;; Forbids '+'.
+    cmp r9b, PLUS            ;; Forbids '+'.
     je .error
-    cmp r9b, MINUS          ;; Forbids '-'.
+    cmp r9b, MINUS           ;; Forbids '-'.
     je .error
 
     ;; Forbids spaces
-    cmp r9b, TAB            ;; '\t'
+    cmp r9b, TAB             ;; '\t'
     jb .printable_ok
-    cmp r9b, CR             ;; '\r'
+    cmp r9b, CR              ;; '\r'
     ja .printable_ok
     jmp .error
 
 .printable_ok:
-    cmp r9b, SPACE          ;; ' '
+    cmp r9b, SPACE           ;; ' '
     je .error
-    cmp r9b, DEL            ;; 'DEL'
+    cmp r9b, DEL             ;; 'DEL'
     ja .error
-    mov rcx, rdi            ;; RDI is our base here.
+    mov rcx, rsi             ;; RDI is our base here.
 
 .dup_find_loop:
     ;; Check if all characters of RCX have been checked 
-    ;; when it reaches the first character of RBX.
-    cmp rcx, rbx
-    je .dup_not_found       ;; If so, there isn't duplicates, move to the next RBX.
+    ;; when it reaches the first character of R10.
+    cmp rcx, r10
+    je .dup_not_found        ;; If so, there isn't duplicates, move to the next R10.
     mov al, byte [rcx]
-    cmp al, r9b             ;; Test byte [RBX] against byte [RCX].
-    je .error               ;; If its equal there is duplicates.
+    cmp al, r9b              ;; Test byte [RAX] against byte [R9].
+    je .error   
+    ;; If its equal there is duplicates.
     add rcx, 1
     jmp .dup_find_loop
 
 .dup_not_found:
-    add rbx, 1              ;; Next base character to test.
+    add r10, 1               ;; Next base character to test.
     jmp .valid_base_loop
 
 .base_ok:
-    xchg rdi, rsi           ;; Swap RDI <-> RSI, in a way that base is RDI and, str is RSI.
-    xor r11, r11            ;; Our Accumulator variable.
-    mov rdx, 1              ;; Our Sign variable.
+    xor r9, r9               ;; Our Accumulator variable.
+    mov rdx, 1               ;; Our Sign variable.
 
 .skip_spaces:
-    mov r13b, byte [rdi]
+    mov al, byte [rdi]
     ;; Skip all spaces before the base
-    cmp r13b, TAB           ;; '\t'
+    cmp al, TAB              ;; '\t'
     jb .not_space
-    cmp r13b, CR            ;; '\r'
+    cmp al, CR               ;; '\r'
     ja .not_space
 
 .is_space:
@@ -83,12 +86,12 @@ ft_atoi_base:
     jmp .skip_spaces
 
 .not_space:
-    cmp r13b, SPACE         ;; ' '
+    cmp al, SPACE            ;; ' '
     je .is_space
 
 ;; Handle multiple signs
 .handle_sign:
-    cmp byte [rdi], PLUS    ;; '+'
+    cmp byte [rdi], PLUS     ;; '+'
     jne .test_negative
     add rdi, 1
     jmp .handle_sign
@@ -105,24 +108,21 @@ ft_atoi_base:
 .atoi_main_loop_preparation:
     ;; To call find_char_index(base, *str)
     ;; we need to swap their positions.
-    xchg rdi, rsi           ;; RSI <-> RDI.
-    mov r8, rdi             ;; Save RDI in R8 so we can restore our base later.
+    xchg rdi, rsi            ;; RSI <-> RDI.
+    mov r8, rdi              ;; Save RDI in R8 so we can restore our base later.
 
 .outer_loop:
-    mov rdi, r8             ;; Restore the base to continue the loop.
-    xor rcx, rcx            ;; Zero out our counter.
-    mov r9b, byte [rsi]     ;; Test if we reached end of string ('\0').
-    test r9b, r9b
+    mov rdi, r8              ;; Restore the base to continue the loop.
+    mov cl, byte [rsi]       ;; Test if we reached end of string ('\0').
+    test cl, cl
     jz .finish
-
-.next_digit:
-    mov rbx, rsi            ;; RBX is our base pointer, that we'll use in our loop.
+    xor rcx, rcx             ;; Zero out our counter.
 
 .find_char:
-    mov r10b, byte [rdi]    ;; Rest if we reached end of base string ('\0').
+    mov r10b, byte [rdi]     ;; Rest if we reached end of base string ('\0').
     test r10b, r10b
     jz .finish
-    mov al, byte [rbx]      ;; Test if our str found an index in the base.
+    mov al, byte [rsi]       ;; Test if our str found an index in the base.
     test al, al
     jz .not_found
     cmp al, r10b
@@ -132,8 +132,8 @@ ft_atoi_base:
     jmp .find_char
 
 .found:
-    imul r11, r12           ;; Multiply our accumulator * base_length.
-    add r11, rcx            ;; Adds the base index to our accumulator.
+    imul r9, r11            ;; Multiply our accumulator * base_length.
+    add r9, rcx             ;; Adds the base index to our accumulator.
     add rsi, 1
     jmp .outer_loop
 
@@ -141,17 +141,13 @@ ft_atoi_base:
     test r10b, r10b
     jz .finish
     add rsi, 1
-    jmp .next_digit
+    jmp .find_char
 
 .finish:
-    imul r11, rdx           ;; Multiply our accumulator * sign.
-    mov rax, r11            ;; Move it to the RAX register.
-    pop r13
-    pop r12
+    imul r9, rdx            ;; Multiply our accumulator * sign.
+    mov rax, r9             ;; Move it to the RAX register.
     ret
 
 .error:
-    xor rax, rax            ;; Zero out the RAX register on error.
-    pop r13                 ;; Restore our callee-saved registers
-    pop r12
+    xor rax, rax             ;; Zero out the RAX register on error.
     ret
