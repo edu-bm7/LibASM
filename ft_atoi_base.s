@@ -2,186 +2,144 @@
 global ft_atoi_base
 extern ft_strlen
 
+TAB	equ 9
+CR	equ 13
+SPACE	equ 32
+DEL	equ 126
+PLUS	equ 43
+MINUS	equ 45
+
 section .text
 ft_atoi_base:
-    ;; Function Prologue
-    ;; Preserve base pointer
-    push rbp
-    ;; Set the new frame base pointer
-    mov rbp, rsp
-    ;; Set enough space for our local variables
-    sub rsp, 40
-    mov [rbp-8], rdi ;; save our original str
-    mov [rbp-24], rdi ;; rbp-8 will be lost, fix latter
-    mov [rbp-16], rsi ;; save our original base
-    mov rdi, rsi ;; move base to rdi so we can call strlen
+    xchg rdi, rsi ;; move base to rdi so we can call strlen
+    mov rbx, rdi ;; rbx is our scan ptr
     call ft_strlen
-    cmp rax, 1
-    jle error
-    mov r8, rax ;; our base length
-    mov rdi, [rbp-16]
-    call ft_is_valid_base
-    test rax, rax
-    jz error
-    mov rdi, [rbp-8] ;; original string
-    mov rsi, [rbp-16] ;; base
-    xor rdx, rdx ;; our sign variable
-    xor r9, r9 ;; our num variable
-    mov rdx, 1
+    cmp rax, 2
+    jb .error
+    mov r12, rax ;; our base length in callee-saved register
+    mov rdi, rbx
+.valid_base_loop: ;; Check if we have a valid base
+    mov r9b, [rbx]
+    test r9b, r9b
+    je .base_ok ; End of loop NULL
+
+    cmp r9b, PLUS ;; forbids '+'
+    je .error
+    cmp r9b, MINUS ;; forbids '-'
+    je .error
     
-.while_is_space:
-    call ft_isspace
-    test eax, eax
-    jz .while_is_sign
+    ;; Forbids range \t <-> /r (spaces)
+    cmp r9b, TAB ;; '\t'
+    jb .printable_ok
+    cmp r9b, CR ;; '\r'
+    ja .printable_ok
+    jmp .error
+.printable_ok:
+    cmp r9b, SPACE ;; ' '
+    je .error
+    cmp r9b, DEL ;; 'DEL'
+    ja .error
+    mov rcx, rdi ;; rdi is our base here
+
+.dup_find_loop:
+    ;; Checks if all characters of rcx already been checked before been equal to first char of rbx
+    cmp rcx, rbx
+    je .dup_not_found ;; if so, there isn't duplicates, move to the next rbx
+    mov al, byte [rcx]
+    cmp al, r9b ;; test [rcx] against [rbx] 
+    je .error ;; if its equal there is duplicates
+    add rcx, 1
+    jmp .dup_find_loop
+
+.dup_not_found:
+    add rbx, 1 ;; next base character to test
+    jmp .valid_base_loop
+
+    
+.base_ok:
+    xchg rdi, rsi ;; revert rdi <-> rsi so base is rdi str is rsi
+    xor r13, r13 ;; our accumulator variable
+    mov rdx, 1 ;; our sign variable
+
+.skip_spaces:
+    mov r14b, byte [rdi]
+    ;; Skip all spaces before the base
+    cmp r14b, TAB ;; '\t'
+    jb .not_space
+    cmp r14b, CR ;; '\r'
+    ja .not_space
+
+.is_space:
     add rdi, 1
-    jmp .while_is_space
+    jmp .skip_spaces
 
-.while_is_sign:
+.not_space:
+    cmp r14b, SPACE ;; ' '
+    je .is_space
 
-    cmp byte [rdi], 43
+;; Handle multiple signs
+.handle_sign:
+    cmp byte [rdi], PLUS ;; '+'
     jne .test_negative
     add rdi, 1
-    jmp .while_is_sign
-.test_negative:
-    cmp byte [rdi], 45
-    je .change_sign
-    jne .atoi_main_loop_preparation
+    jmp .handle_sign
 
 .change_sign:
-    neg rdx
+    neg rdx ;; invert the sign
     add rdi, 1
-    jmp .while_is_sign
+    jmp .handle_sign
+
+.test_negative:
+    cmp byte [rdi], MINUS ;; '-'
+    je .change_sign
 
 .atoi_main_loop_preparation:
     ;; we need to call find_char_index(base, *str)
-    ;; str in on rdi, and base on rsi, r8 also holds the base, r9 is our num value rbp-8 our base_length
     ;; we need to swap their positions
-    mov [rbp-40], rsi
-    xchg rdi, rsi
-.atoi_main_loop:
-    cmp byte [rsi], 0
-    je .end
-    call find_char_index
-    cmp rax, -1
-    je .end
-    mov rdi, [rbp-40]
-    imul r9, r8
-    add r9, rax
-    add rsi, 1
-    jmp .atoi_main_loop
+    xchg rdi, rsi ;; rsi <-> rdi
+    mov r8, rdi ;; save rdi to r8 so we can restore our base later
 
-.end:
-    imul r9, rdx
-    mov rax, r9
-    add rsp, 40
-    pop rbp
-    ret
+.outer_loop:
+    mov rdi, r8 ;; restore the base to continue the loop
+    xor rcx, rcx ;; zero our counter
+    ;; move the rsi character into r9b to test if we reach the end of string \0
+    mov r9b, byte [rsi] 
+    test r9b, r9b
+    jz .finish
+
+.next_digit:
+    mov rbx, rsi ;; RBX is our base pointer, that we'll use in our loop
     
-ft_is_valid_base:
-.alignment:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 40
-    cmp r8b, 1
-    jle .end
-.main_loop:
-    cmp byte [rdi], 0
-    je .end
-    cmp byte [rdi], 43 ;; '+' in ASCII table
-    je .error
-    cmp byte [rdi], 45 ;; '-' in ASCII table
-    je .error
-    mov [rbp-24], rdi
-    call ft_isprint
-    test eax, eax
-    jz .error
-    mov rdi, [rbp-24]
-    call ft_isspace
-    test eax, eax
-    jnz .error
-    mov rdi, [rbp-24]
-    mov rsi, rdi
+.find_char:
+    mov r10b, byte [rdi] ;; test if we already checked all our base
+    test r10b, r10b
+    jz .finish
+    mov al, byte [rbx] ;; test if our str found an index in the base
+    test al, al
+    jz .not_found
+    cmp al, r10b
+    je .found
     add rdi, 1
-    mov [rbp-24], rdi
-    call find_char_index
-    cmp eax, 0
-    jge .error
-    mov rdi, [rbp-24]
-    jmp .main_loop
+    add rcx, 1
+    jmp .find_char
+
+.found:
+    imul r13, r12 ;; multiply our accumulator * base_length
+    add r13, rcx ;; adds the base index to our accumulator
+    add rsi, 1
+    jmp .outer_loop
+
+.not_found:
+    test r10b, r10b
+    jz .finish
+    add rsi, 1
+    jmp .next_digit
+
+.finish:
+    imul r13, rdx
+    mov rax, r13
+    ret
 
 .error:
     xor rax, rax
-    add rsp, 40
-    pop rbp
     ret
-
-.end:
-    mov rax, 1
-    add rsp, 40
-    pop rbp
-    ret
-
-find_char_index:
-    cmp byte [rsi], 0
-    je .string_empty
-    xor rcx, rcx ;; zero our counter
-
-.loop_string:
-    mov al, [rdi]
-    test al, al
-    jz .end_of_loop
-    cmp al, byte [rsi]
-    je .found
-    add rcx, 1
-    add rdi, 1
-    jmp .loop_string
-
-.found:
-    mov rax, rcx
-    ret
-
-.end_of_loop:
-    mov rax, -1
-    ret
-
-.string_empty:
-    xor rax, rax
-    ret
-
-ft_isprint:
-    cmp byte [rdi], 32 ;; ' ' in ASCII table
-    jb .not_in_range
-    cmp byte [rdi], 126 ;; '~' in ASCII table
-    ja .not_in_range
-    mov rax, 1
-    ret
-
-.not_in_range:
-    xor rax, rax
-    ret
-
-ft_isspace: 
-    cmp	byte [rdi], 9	;; '\t' in ASCII table
-    jb .not_in_range
-    cmp byte [rdi], 13 ;; '\r' in ASCII table
-    ja .not_in_range
-    mov rax, 1
-    ret
-
-.not_in_range:
-    cmp byte [rdi], 32 ;; ' ' in ASCII table
-    je .space
-    xor rax, rax
-    ret
-
-.space:
-    mov rax, 1
-    ret
-
-error:
-    xor rax, rax
-    add rsp, 40
-    pop rbp
-    ret
-
-
