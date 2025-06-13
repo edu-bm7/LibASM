@@ -1,4 +1,7 @@
 ;; ft_atoi_base(char *str, char *base)
+;; Here despite the fact there this is a leaf function, to avoid the function call/return
+;; overhead, I used callee-saved registers, so we do need to restore them before returning
+;; the function
 global ft_atoi_base
 extern ft_strlen
 
@@ -12,6 +15,9 @@ MINUS	equ 45
 
 section .text
 ft_atoi_base:
+    ;; Push our callee-saved address
+    push r12
+    push r13
     xchg rdi, rsi           ;; Swap RDI <-> RSI so we can call ft_strlen() with the base.
     mov rbx, rdi            ;; RBX is our scan ptr.
     call ft_strlen
@@ -61,15 +67,15 @@ ft_atoi_base:
 
 .base_ok:
     xchg rdi, rsi           ;; Swap RDI <-> RSI, in a way that base is RDI and, str is RSI.
-    xor r13, r13            ;; Our Accumulator variable.
+    xor r11, r11            ;; Our Accumulator variable.
     mov rdx, 1              ;; Our Sign variable.
 
 .skip_spaces:
-    mov r14b, byte [rdi]
+    mov r13b, byte [rdi]
     ;; Skip all spaces before the base
-    cmp r14b, TAB           ;; '\t'
+    cmp r13b, TAB           ;; '\t'
     jb .not_space
-    cmp r14b, CR            ;; '\r'
+    cmp r13b, CR            ;; '\r'
     ja .not_space
 
 .is_space:
@@ -77,7 +83,7 @@ ft_atoi_base:
     jmp .skip_spaces
 
 .not_space:
-    cmp r14b, SPACE         ;; ' '
+    cmp r13b, SPACE         ;; ' '
     je .is_space
 
 ;; Handle multiple signs
@@ -126,8 +132,8 @@ ft_atoi_base:
     jmp .find_char
 
 .found:
-    imul r13, r12           ;; Multiply our accumulator * base_length.
-    add r13, rcx            ;; Adds the base index to our accumulator.
+    imul r11, r12           ;; Multiply our accumulator * base_length.
+    add r11, rcx            ;; Adds the base index to our accumulator.
     add rsi, 1
     jmp .outer_loop
 
@@ -138,10 +144,14 @@ ft_atoi_base:
     jmp .next_digit
 
 .finish:
-    imul r13, rdx           ;; Multiply our accumulator * sign.
-    mov rax, r13            ;; Move it to the RAX register.
+    imul r11, rdx           ;; Multiply our accumulator * sign.
+    mov rax, r11            ;; Move it to the RAX register.
+    pop r13
+    pop r12
     ret
 
 .error:
     xor rax, rax            ;; Zero out the RAX register on error.
+    pop r13                 ;; Restore our callee-saved registers
+    pop r12
     ret
