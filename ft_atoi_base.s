@@ -55,7 +55,6 @@ ft_atoi_base:
     add rbx, 1		    ;; next base character to test
     jmp .valid_base_loop
 
-    
 .base_ok:
     xchg rdi, rsi	    ;; revert rdi <-> rsi so base is rdi str is rsi
     xor r13, r13	    ;; our accumulator variable
@@ -94,8 +93,7 @@ ft_atoi_base:
     je .change_sign
 
 .atoi_main_loop_preparation:
-    ;; we need to call find_char_index(base, *str)
-    ;; we need to swap their positions
+    ;; To call find_char_index(base, *str) we need to swap their positions
     xchg rdi, rsi	    ;; rsi <-> rdi
     mov r8, rdi		    ;; save rdi to r8 so we can restore our base later
 
@@ -109,7 +107,7 @@ ft_atoi_base:
 
 .next_digit:
     mov rbx, rsi	    ;; RBX is our base pointer, that we'll use in our loop
-    
+
 .find_char:
     mov r10b, byte [rdi]    ;; test if we already checked all our base
     test r10b, r10b
