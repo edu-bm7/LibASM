@@ -18,24 +18,24 @@ ft_list_push_front:
     push rbp
     mov rbp, rsp
     sub rsp, 24
-    mov [rbp-8], rdi ;; save begin_list so malloc doesn't clobber it
-    mov [rbp-16], rsi ;; save the data so malloc doesn't clobber it
+    mov [rbp-8], rdi        ;; save begin_list so malloc doesn't clobber it
+    mov [rbp-16], rsi       ;; save the data so malloc doesn't clobber it
     mov rdi, 16
     call malloc wrt ..plt
     test rax, rax
     jz .error
-    mov rdi, [rbp-8] ;; restore begin_list
-    mov rsi, [rbp-16] ;; restore data
-    mov [rax], rsi ;; move *(new_node) <- data (offset 0)
-    mov rdx, [rdi] ;; load RDX <- *begin_list
-    mov [rax+8], rdx ;; move *(new_node->next) <- *begin_list
-    mov [rdi], rax ;; move *begin_list <- new_node
+    mov rdi, [rbp-8]        ;; restore begin_list
+    mov rsi, [rbp-16]       ;; restore data
+    mov [rax], rsi          ;; move *(new_node) <- data (offset 0)
+    mov rdx, [rdi]          ;; load RDX <- *begin_list
+    mov [rax+8], rdx        ;; move *(new_node->next) <- *begin_list
+    mov [rdi], rax          ;; move *begin_list <- new_node
     add rsp, 24
     pop rbp
     ret
 
 .error:
-    mov edi, 12 ;; (ENOMEM)
+    mov edi, 12             ;; (ENOMEM)
     call __errno_location wrt ..plt
     mov [rax], edi
     xor rax, rax
