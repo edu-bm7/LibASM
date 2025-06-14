@@ -20,6 +20,7 @@ SRCS = $(addprefix $(SRCS_DIR), ft_strlen.s\
 				)
 BONUS_SRCS = $(addprefix $(BONUS_DIR), ft_atoi_base.s\
 	     			ft_list_push_front.s\
+				ft_list_size.s\
 	     					)
 
 C_OBJS = $(patsubst %.c, %.o, $(wildcard *.c))
