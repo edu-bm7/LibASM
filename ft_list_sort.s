@@ -36,18 +36,23 @@ ft_list_sort:
     mov   r14, [r13+8]  ;; next = curr->next
     test  r12, r12      ;; sorted == NULL ?
     jz    .insert_head
+    mov   rdi, [r13]
+    mov   rsi, [r12]
+    call  rbx
+    jl    .insert_head
     mov   r15, r12      ;; prev = sorted
 
 .compare_data_values:
     mov   r10, [r15+8]  ;; load the next pointer into a register
     test  r10, r10      ;; prev->next == NULL ?
     jz    .splice
-    mov   rdi, [r10]    ;; load prev->next into rdi so we can call cmp function
-    mov   rsi, [r13]    ;; load curr into rsi so we can call cmp function
+    mov   rdi, [r13]    ;; load prev->next into rdi so we can call cmp function
+    mov   rsi, [r10]    ;; load curr into rsi so we can call cmp function
     call  rbx           ;; call cmp (void *, void *)
-    test  rax, rax
-    js    .walk_prev
-    jmp   .splice
+    jl   .splice
+    mov   r10, [r15+8]
+    mov   r15, r10         ;; prev = prev->next
+    jmp   .compare_data_values
 
 .insert_head:
     mov   [r13+8], r12  ;; curr->next = sorted = null
