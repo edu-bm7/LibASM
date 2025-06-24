@@ -1,4 +1,6 @@
+en.subject*
 *.a
+test
 *.o
 tests.c
 tests
