@@ -24,7 +24,10 @@ extern ssize_t ft_write (int fd, const void *buf, size_t count);
 extern ssize_t ft_read (int fd, const void *buf, size_t count);
 extern char *ft_strdup (const char *s);
 extern int ft_atoi_base (char *str, char *base);
-extern void ft_list_sort (t_list **begin, int (*cmp) ());
+extern void ft_list_sort (t_list **begin, int (*cmp) (void *, void *));
+extern void ft_list_remove_if (t_list **begin, void *data_ref,
+                               int (*cmp) (void *, void *),
+                               void (*free_fct) (void *));
 
 static int
 compar_int (void *a, void *b)
@@ -34,44 +37,15 @@ compar_int (void *a, void *b)
   return num1 - num2;
 }
 
-// approach one
-void
-ft_list_remove_if_1 (t_list **begin, void *data_ref, int (*cmp) (),
-                     void (*free_fct) (void *))
+static void
+free_fct (void *data)
 {
-  t_list *curr = *begin;
-  t_list *prev = *begin;
-  while (curr)
-    {
-      t_list *next = curr->next;
-      if (!cmp (curr->data, data_ref))
-        {
-          if (curr == *begin)
-            {
-              *begin = next;
-              prev = *begin;
-              free_fct (curr->data);
-              free (curr);
-            }
-          else
-            {
-              prev->next = next;
-              free_fct (curr->data);
-              free (curr);
-            }
-        }
-      else if (curr != prev)
-        {
-          prev = curr;
-        }
-      curr = next;
-    }
+  free (data);
 }
 
-// approach 2 pointer-to-pointer
 void
-ft_list_remove_if (t_list **begin, void *data_ref, int (*cmp) (),
-                   void (*free_fct) (void *))
+ft_list_remove_if_in_c (t_list **begin, void *data_ref,
+                        int (*cmp) (void *, void *), void (*free_fct) (void *))
 {
   t_list **link = begin;
   while (*link)
@@ -181,6 +155,19 @@ main ()
       printf ("%i\n", *((int *)walk->data));
       walk = walk->next;
     }
+
+  int i = 1;
+  t_list *li = list_from_format ("1 1 1 1 1 1");
+  ft_list_remove_if (&li, &i, compar_int, free_fct);
+  if (li)
+    {
+      printf ("FALHOU!\n");
+    }
+  else
+    {
+      printf ("DEU BOM!\n");
+    }
+
   return 0;
 }
 

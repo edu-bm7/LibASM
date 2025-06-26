@@ -37,6 +37,8 @@ ft_list_remove_if:
     push  r12
     push  r13
     push  r14
+    push  r15
+    mov   r15, rsi      ;; save our data_ref so it doesn't get clobbered
     xor   r14, r14      ;; our t_list *node pointer
     mov   r12, rdi      ;; t_list **link = begin
     mov   rbx, rdx      ;; save our cmp() function into a callee-saved register
@@ -47,6 +49,7 @@ ft_list_remove_if:
     test  r14, r14
     jz    .end
     mov   rdi, [r14]     ;; t_list *node = *link
+    mov   rsi, r15
     call  rbx
     jz    .delete_node
     lea   r12, [r14+8]     ;; link = &node->next
