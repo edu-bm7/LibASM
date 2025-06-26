@@ -58,7 +58,7 @@ ft_list_remove_if:
     mov   rdi, [r14]
     call  r13
     mov   rdi, r14
-    call  free
+    call  free wrt ..plt
     jmp   .loop
 
 .end:
