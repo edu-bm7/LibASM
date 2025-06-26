@@ -34,6 +34,62 @@ compar_int (void *a, void *b)
   return num1 - num2;
 }
 
+// approach one
+void
+ft_list_remove_if_1 (t_list **begin, void *data_ref, int (*cmp) (),
+                     void (*free_fct) (void *))
+{
+  t_list *curr = *begin;
+  t_list *prev = *begin;
+  while (curr)
+    {
+      t_list *next = curr->next;
+      if (!cmp (curr->data, data_ref))
+        {
+          if (curr == *begin)
+            {
+              *begin = next;
+              prev = *begin;
+              free_fct (curr->data);
+              free (curr);
+            }
+          else
+            {
+              prev->next = next;
+              free_fct (curr->data);
+              free (curr);
+            }
+        }
+      else if (curr != prev)
+        {
+          prev = curr;
+        }
+      curr = next;
+    }
+}
+
+// approach 2 pointer-to-pointer
+void
+ft_list_remove_if (t_list **begin, void *data_ref, int (*cmp) (),
+                   void (*free_fct) (void *))
+{
+  t_list **link = begin;
+  while (*link)
+    {
+      t_list *node = *link;
+      if (!cmp (node->data, data_ref))
+        {
+          *link = node->next;
+          free_fct (node->data);
+          free (node);
+        }
+      else
+        {
+          link = &node->next;
+        }
+    }
+}
+
 int
 main ()
 {
@@ -183,5 +239,4 @@ list_from_format (char *fmt)
     }
   return reverse (head);
 }
-
-// vim: sts=4 sw=4 et
+// vim: sts=2 sw=2 et
