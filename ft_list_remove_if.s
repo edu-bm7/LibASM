@@ -65,6 +65,7 @@ ft_list_remove_if:
     jmp   .loop
 
 .end:
+    pop   r15
     pop   r14
     pop   r13
     pop   r12
