@@ -27,6 +27,7 @@ global ft_list_remove_if
 extern free
 
 section .text
+ft_list_remove_if:
     ;; Here we just iterate throughout the whole list looking for a match between
     ;; data_ref and *begin_list->data, in C we used a pointer-to-pointer to make it easier
     ;; to delete and move around the Single-linked-list
