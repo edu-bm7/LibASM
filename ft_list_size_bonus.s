@@ -13,15 +13,15 @@ section .text
     ;; No need to call extern functions, so we can
     ;; treat this function as a leaf funtion and adopt frame-pointer omission.
 ft_list_size:
-    xor rax, rax     ;; our counter/return value
+    xor   rax, rax      ;; our counter/return value
 .loop:
-    test rdi, rdi
-    jz .end
-    add rax, 1
-    mov rdi, [rdi+8]  ;; load our next variable -> list = list->next
-    jmp .loop
+    test  rdi, rdi
+    jz    .end
+    add   rax, 1
+    mov   rdi, [rdi+8]  ;; load our next variable -> list = list->next
+    jmp   .loop
 
 .end:
     ret
-
+;; vim: sts=2 sw=2 et 
 

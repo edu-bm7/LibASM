@@ -1,33 +1,4 @@
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-typedef struct s_list
-{
-  void *data;
-  struct s_list *next;
-} t_list;
-
-int *create_data_elem (int data);
-t_list *create_elem (int data);
-static void push_front (t_list **lst_ptr, t_list *new_front);
-static t_list *reverse (t_list *list);
-t_list *list_from_format (char *fmt);
-
-extern size_t ft_strlen (const char *str);
-extern char *ft_strcpy (char *dst, const char *src);
-extern int ft_strcmp (const char *s1, const char *s2);
-extern ssize_t ft_write (int fd, const void *buf, size_t count);
-extern ssize_t ft_read (int fd, const void *buf, size_t count);
-extern char *ft_strdup (const char *s);
-extern int ft_atoi_base (char *str, char *base);
-extern void ft_list_sort (t_list **begin, int (*cmp) (void *, void *));
-extern void ft_list_remove_if (t_list **begin, void *data_ref,
-                               int (*cmp) (void *, void *),
-                               void (*free_fct) (void *));
+#include "libasm.h"
 
 static int
 compar_int (void *a, void *b)
@@ -64,62 +35,103 @@ ft_list_remove_if_in_c (t_list **begin, void *data_ref,
     }
 }
 
+void
+list_destroy (t_list *list)
+{
+  if (list == NULL)
+    return;
+  list_destroy (list->next);
+  if (list->data != NULL)
+    free (list->data);
+  free (list);
+}
+
 int
 main ()
 {
   char *str = "Hello, World!";
   char *str2 = "";
   char *str3 = "Eduardo";
-  printf ("Testes do ft_strlen: \n");
+  printf (
+      "--------------------- ft_strlen-------------------------------- \n");
   printf ("Hello, World! | %ld | %ld\n", ft_strlen (str), strlen (str));
   printf ("Vazio | %ld | %ld \n", ft_strlen (str2), strlen (str2));
-  printf ("--------------------------------\n");
+  printf (
+      "----------------------------------------------------------------\n");
   char cpystr[8] = { '\0' };
   char *str5 = strcpy (cpystr, str3);
+  printf (
+      "--------------------- ft_strcpy-------------------------------- \n");
   printf ("System strcpy, %s, buffer %s\n", str5, cpystr);
+
   char cpystr2[8] = { '\0' };
   char *str6 = ft_strcpy (cpystr2, str3);
-  printf ("Our ft_strcpy, %s, buffer %s\n", str6, cpystr2);
-  printf ("--------------------------------\n");
+
+  printf ("ft_strcpy, %s, buffer %s\n", str6, cpystr2);
+  printf (
+      "----------------------------------------------------------------\n");
+  printf (
+      "--------------------- ft_strcmp-------------------------------- \n");
+
   char *strcp = "abcdef123";
   char *strcp2 = "abcdef124";
   char *strcp3 = "abcdef121";
   char *strcp4 = "abcefd123";
   char *strcp5 = "bbcefd123";
-  printf ("strcmp return value and ours: %d | %d\n", strcmp (strcp, strcp2),
-          ft_strcmp (strcp, strcp2));
-  printf ("strcmp return value and ours: %d | %d\n", strcmp (strcp, strcp3),
-          ft_strcmp (strcp, strcp3));
-  printf ("strcmp return value and ours: %d | %d\n", strcmp (strcp, strcp4),
-          ft_strcmp (strcp, strcp4));
-  printf ("strcmp return value and ours: %d | %d\n", strcmp (strcp, strcp4),
-          ft_strcmp (strcp, strcp4));
-  printf ("strcmp return value and ours: %d | %d\n", strcmp (strcp4, strcp5),
-          ft_strcmp (strcp4, strcp5));
+
+  printf ("SYSTEM STRCMP | FT_STRCMP: ('abcdef123','abcdef124') \n%d | %d\n",
+          strcmp (strcp, strcp2), ft_strcmp (strcp, strcp2));
+  printf ("SYSTEM STRCMP | FT_STRCMP:('abcdef123','abcdef121' \n%d | %d\n",
+          strcmp (strcp, strcp3), ft_strcmp (strcp, strcp3));
+  printf ("SYSTEM STRCMP | FT_STRCMP: ('abcdef123','abcdef123')\n%d | %d\n",
+          strcmp (strcp, strcp), ft_strcmp (strcp, strcp));
+  printf ("SYSTEM STRCMP | FT_STRCMP: ('abcdef123','abcefd123')\n%d | %d\n",
+          strcmp (strcp, strcp4), ft_strcmp (strcp, strcp4));
+  printf ("SYSTEM STRCMP | FT_STRCMP: ('abcefd123','bbcefd123')\n %d | %d\n",
+          strcmp (strcp4, strcp5), ft_strcmp (strcp4, strcp5));
+
+  printf (
+      "----------------------------------------------------------------\n");
+  printf (
+      "--------------------- ft_strdup-------------------------------- \n");
 
   char *p = ft_strdup (strcp);
 
   if (p != NULL)
     {
-      printf ("P IS VALID!!!\n");
+      printf ("Pointer IS VALID!!!\n");
       printf ("%s | %s\n", strcp, p);
       free (p);
     }
   else
     {
-      printf ("P IS NULL!!!\n");
+      printf ("Pointer IS NULL!!!\n");
       printf ("Value of errno: %d\n", errno);
       printf ("The error message 1 is : %s\n", strerror (errno));
     }
+  printf (
+      "------------------------------------------------------------------\n");
+  printf (
+      "--------------------- ft_write--------------------------------- \n");
 
-  int fd = open ("test_file.txt", O_RDWR | O_APPEND);
+  int fd = open ("test_file.txt", O_CREAT | O_RDWR | O_APPEND);
+  printf ("System write: \n");
   ssize_t a = write (1, "Hello, World!\n", 14);
-  ssize_t b = write (fd, "Our Hello from x86-64 Assembly Code\n", 36);
+  printf ("ft_write(): \n");
   ssize_t c = ft_write (1, "Hello, World!\n", 14);
-  printf ("Value of errno: %d\n", errno);
-  printf ("The error message 1 is : %s\n", strerror (errno));
+  printf ("System write to FD(test_file.txt): \n");
+  ssize_t b = write (fd, "Our Hello from x86-64 Assembly Code\n", 36);
+  printf ("ft_write() to FD(test_file.txt): \n");
   ssize_t d = ft_write (fd, "Our Hello from x86-64 Assembly Code\n", 36);
-  printf ("a, b, c, d | %ld | %ld | %ld | %ld \n", a, b, c, d);
+  printf ("system write | system write | ft_write | ft_write | %ld | %ld | "
+          "%ld | %ld \n",
+          a, b, c, d);
+  printf ("testing ft_write errno support (writing to a bad FD): \n ");
+  ft_write (1936, "Our Hello from x86-64 Assembly Code\n", 36);
+  printf ("Value of our write errno: %d\n", errno);
+  printf ("The error message 2 is : %s\n", strerror (errno));
+  printf ("-------------------System read() ------------------------------\n");
+
   lseek (fd, 0, SEEK_SET);
   char buffer[15];
   char buffer2[15];
@@ -128,8 +140,6 @@ main ()
     buffer[14] = '\0';
   else
     buffer[0] = '\0';
-  printf ("Value of errno: %d\n", errno);
-  printf ("The error message 1 is : %s\n", strerror (errno));
   lseek (fd, 0, SEEK_SET);
 
   ssize_t ret = ft_read (fd, buffer2, 15);
@@ -138,35 +148,92 @@ main ()
   else
     buffer2[0] = '\0';
 
-  printf ("Value of errno 2: %d\n", errno);
-  printf ("The error message 2 is : %s\n", strerror (errno));
-  printf ("Buffer1:\n%s\nBuffer2:\n%s\n| %ld | %ld\n", buffer, buffer2, ret2,
+  printf ("Buffer1:\n%s\n", buffer);
+  printf (
+      "------------------------ft_read()-------------------------------\n");
+  printf ("Buffer2:\n%s\nRETURN VALUE OF READ | %ld | %ld\n", buffer2, ret2,
           ret);
+  printf (
+      "----------------------ATOI BASE---------------------------------\n");
 
-  int b10 = ft_atoi_base ("f", "0123456789");
   int b2 = ft_atoi_base ("101", "01");
+  int b10 = ft_atoi_base ("f", "0123456789");
   int b16 = ft_atoi_base ("-++++++-+--ff", "0123456789abcdef");
+
   printf ("%d\n%d\n%d\n", b2, b10, b16);
-  t_list *tmp = list_from_format ("1 2 3");
+  printf (
+      "------------------------ft_list_sort----------------------------\n");
+  t_list *tmp = list_from_format ("-7 9 0 8 3 1 6 12 32 18");
   ft_list_sort (&tmp, compar_int);
   t_list *walk = tmp;
   while (walk)
     {
-      printf ("%i\n", *((int *)walk->data));
+      printf ("%i ", *((int *)walk->data));
       walk = walk->next;
     }
+  printf ("\n");
 
+  list_destroy (tmp);
+  printf ("---------------ft_list_size and "
+          "ft_list_push_front------------------\n");
+  tmp = list_from_format ("");
+  printf ("List initial size: %i\n", ft_list_size (tmp));
+  printf ("Calling ft_list_push_front(3)\n");
+  ft_list_push_front (&tmp, create_data_elem (3));
+  printf ("List size: %i\n", ft_list_size (tmp));
+  printf ("Calling ft_list_push_front(2)\n");
+  ft_list_push_front (&tmp, create_data_elem (2));
+  printf ("List size: %i\n", ft_list_size (tmp));
+  printf ("Calling ft_list_push_front(1)\n");
+  ft_list_push_front (&tmp, create_data_elem (1));
+  printf ("List size: %i\n", ft_list_size (tmp));
+  printf ("List elements: \n");
+  walk = tmp;
+  while (walk)
+    {
+      printf ("%i ", *(int *)walk->data);
+      walk = walk->next;
+    }
+  printf ("\n");
+  list_destroy (tmp);
+  printf ("-------------------ft_list_remove_if-------------------------------"
+          "-\n");
   int i = 1;
   t_list *li = list_from_format ("1 1 1 1 1 1");
+  printf ("Lista: 1 1 1 1 1 1\nChamando list_remove_if(1)...\n");
   ft_list_remove_if (&li, &i, compar_int, free_fct);
   if (li)
     {
-      printf ("FALHOU!\n");
+      printf ("Não removeu todos os items!\n");
     }
   else
     {
-      printf ("DEU BOM!\n");
+      printf ("Removeu todos os items!\n");
     }
+  printf ("List size depois do remove_if: %i\n", ft_list_size (li));
+  list_destroy (li);
+  printf ("Lista: 1 2 1 2 1 2\nChamando list_remove_if(1)...\n");
+  li = list_from_format ("1 2 1 2 1 2");
+  ft_list_remove_if (&li, &i, compar_int, free_fct);
+  t_list *curr = li;
+  int fail = 0;
+  printf ("Lista depois do remove_if:\n");
+  while (curr)
+    {
+      if (!compar_int (curr->data, &i))
+        {
+          fail = 1;
+          break;
+        }
+      printf ("%d ", *(int *)curr->data);
+      curr = curr->next;
+    }
+  printf ("\n");
+  if (fail)
+    {
+      printf ("FALHOU!");
+    }
+  list_destroy (li);
 
   return 0;
 }
